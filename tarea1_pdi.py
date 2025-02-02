@@ -123,6 +123,40 @@ def negative_filter(original_image):
     return image
 
 
+def rgb_filter_channel_only(original_image, channel="red"):
+    """
+    Filtro que conserva únicamente el canal especificado (R, G o B)
+    y pone a 0 los otros canales.
+
+    channel = "red"   -> (r, 0, 0)
+    channel = "green" -> (0, g, 0)
+    channel = "blue"  -> (0, 0, b)
+    """
+    image = original_image.copy()
+    width, height = image.size
+    pixels = image.load()
+
+    for y in range(height):
+        for x in range(width):
+            r, g, b = pixels[x, y]
+
+            if channel == "red":
+                new_r, new_g, new_b = (r, 0, 0)
+            elif channel == "green":
+                new_r, new_g, new_b = (0, g, 0)
+            elif channel == "blue":
+                new_r, new_g, new_b = (0, 0, b)
+            else:
+                # Por si acaso hay un valor no esperado,
+                # devolvemos el píxel tal cual.
+                new_r, new_g, new_b = r, g, b
+
+            pixels[x, y] = (new_r, new_g, new_b)
+
+    return image
+
+
+
 def main():
     st.sidebar.title("Configuraciones y Filtros")
 
@@ -130,19 +164,20 @@ def main():
         "Mosaico",
         "Tono de gris",
         "Alto contraste",
-        "Inverso",  # Nuevo: Filtro Inverso (Negativo)
-        "Filtro RGB (pendiente)",
+        "Inverso",
+        "Filtro RGB",
         "Brillo (pendiente)"
     ]
 
     selected_filter = st.sidebar.selectbox("Selecciona un filtro:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
+    # Parámetros
     block_size = 10
     grayscale_method = "average"
     high_contrast_threshold = 128
+    rgb_choice = "red"  # Rojo por defecto
 
-    # Configuraciones específicas
     if selected_filter == "Mosaico":
         block_size = st.sidebar.number_input(
             "Tamaño de la cuadrícula (px):",
@@ -177,6 +212,19 @@ def main():
             max_value=255,
             value=128
         )
+
+    elif selected_filter == "Filtro RGB":
+        # Elegimos uno de los 3 canales para saturarlo
+        rgb_channel = st.sidebar.radio(
+            "Elige el canal a saturar:",
+            ("Rojo", "Verde", "Azul")
+        )
+        if rgb_channel == "Rojo":
+            rgb_choice = "red"
+        elif rgb_channel == "Verde":
+            rgb_choice = "green"
+        else:
+            rgb_choice = "blue"
 
     st.title("Aplicación de Filtros de Imágenes")
 
@@ -226,6 +274,14 @@ def main():
                 st.image(
                     result_image,
                     caption="Imagen Inversa (Negativo)",
+                    use_container_width=True
+                )
+
+            elif selected_filter == "Filtro RGB":
+                result_image = rgb_filter_channel_only(original_image, channel=rgb_choice)
+                st.image(
+                    result_image,
+                    caption=f"Imagen con Filtro RGB ({rgb_choice.upper()})",
                     use_container_width=True
                 )
 
