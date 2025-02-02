@@ -41,7 +41,7 @@ En el archivo **requirements.txt** están listadas las dependencias necesarias (
 
 ## Uso de la Aplicación
 
-1. **Sube una imagen** en la barra lateral (sidebar). Acepta formatos `JPG`, `JPEG` o `PNG`.
+1. **Sube una imagen** en la barra lateral (sidebar). Acepta formatos `JPG`, `JPEG` o `PNG`. En caso de que la imagen esté en formato RGBA la convierte a RGB.
 2. **Selecciona** el filtro que deseas aplicar desde la lista desplegable (selectbox):
    - **Mosaico**: Divide la imagen en bloques y asigna el color promedio a cada bloque.
    - **Tono de Gris**: Convierte la imagen a blanco y negro, usando un promedio `(R+G+B)/3` o un método ponderado `(0.3*R + 0.7*G + 0.1*B)`.

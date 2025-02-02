@@ -300,7 +300,8 @@ def main():
         st.title("Aplicación de Filtros de Imágenes")
 
     if uploaded_file is not None:
-        original_image = Image.open(uploaded_file)
+        # Cargar la imagen y convertirla a RGB, por si es RGBA
+        original_image = Image.open(uploaded_file).convert('RGB')
 
         col1, col2 = st.columns(2)
 
