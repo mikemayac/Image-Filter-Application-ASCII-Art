@@ -156,6 +156,37 @@ def rgb_filter_channel_only(original_image, channel="red"):
     return image
 
 
+def brightness_filter(original_image, brightness_delta=0):
+    """
+    Ajusta el brillo de la imagen sumando (o restando) una constante
+    a cada componente (R, G, B) de cada píxel.
+
+    :param original_image: Imagen PIL original.
+    :param brightness_delta: Valor a añadir o restar. Puede ser positivo (aumenta brillo) o negativo (reduce brillo).
+    :return: Imagen con brillo ajustado.
+    """
+    image = original_image.copy()
+    width, height = image.size
+    pixels = image.load()
+
+    for y in range(height):
+        for x in range(width):
+            r, g, b = pixels[x, y]
+
+            # Sumamos brightness_delta a cada componente
+            new_r = r + brightness_delta
+            new_g = g + brightness_delta
+            new_b = b + brightness_delta
+
+            # Hacemos "clamp" a [0, 255] para evitar valores fuera de rango
+            new_r = max(0, min(255, new_r))
+            new_g = max(0, min(255, new_g))
+            new_b = max(0, min(255, new_b))
+
+            pixels[x, y] = (new_r, new_g, new_b)
+
+    return image
+
 
 def main():
     st.sidebar.title("Configuraciones y Filtros")
@@ -166,18 +197,20 @@ def main():
         "Alto contraste",
         "Inverso",
         "Filtro RGB",
-        "Brillo (pendiente)"
+        "Brillo"  # Ya implementado
     ]
 
     selected_filter = st.sidebar.selectbox("Selecciona un filtro:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
-    # Parámetros
+    # Parámetros de cada filtro
     block_size = 10
     grayscale_method = "average"
     high_contrast_threshold = 128
-    rgb_choice = "red"  # Rojo por defecto
+    rgb_choice = "red"
+    brightness_delta = 0  # para el filtro de Brillo
 
+    # Configuraciones según el filtro elegido
     if selected_filter == "Mosaico":
         block_size = st.sidebar.number_input(
             "Tamaño de la cuadrícula (px):",
@@ -214,9 +247,8 @@ def main():
         )
 
     elif selected_filter == "Filtro RGB":
-        # Elegimos uno de los 3 canales para saturarlo
         rgb_channel = st.sidebar.radio(
-            "Elige el canal a saturar:",
+            "Elige el canal a mostrar:",
             ("Rojo", "Verde", "Azul")
         )
         if rgb_channel == "Rojo":
@@ -225,6 +257,15 @@ def main():
             rgb_choice = "green"
         else:
             rgb_choice = "blue"
+
+    elif selected_filter == "Brillo":
+        brightness_delta = st.sidebar.slider(
+            "Ajuste de brillo (-255 a 255)",
+            min_value=-255,
+            max_value=255,
+            value=0,
+            step=5
+        )
 
     st.title("Aplicación de Filtros de Imágenes")
 
@@ -285,11 +326,18 @@ def main():
                     use_container_width=True
                 )
 
+            elif selected_filter == "Brillo":
+                result_image = brightness_filter(original_image, brightness_delta)
+                st.image(
+                    result_image,
+                    caption=f"Imagen con ajuste de brillo ({brightness_delta})",
+                    use_container_width=True
+                )
+
             else:
                 st.warning("Este filtro todavía no está implementado.")
     else:
         st.info("Por favor, sube una imagen para aplicar un filtro.")
-
 
 if __name__ == "__main__":
     main()
