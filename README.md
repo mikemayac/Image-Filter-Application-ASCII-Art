@@ -56,6 +56,8 @@ En el archivo **requirements.txt** están listadas las dependencias necesarias (
 
 ```
 ├── tarea1_pdi.py          # Código principal de la aplicación
+│── .streamlit/            # Capeta de configuración 
+│    └── config.toml       # Archivo usado para configuración del peso de las imágenes
 ├── README.md              # Archivo de documentación
 ├── requirements.txt       # Dependencias del proyecto
 └── venv/                  # Entorno virtual
