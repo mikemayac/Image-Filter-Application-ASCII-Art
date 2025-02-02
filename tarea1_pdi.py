@@ -1,5 +1,7 @@
 import streamlit as st
 from PIL import Image
+from io import BytesIO
+
 
 # Configuración de la página en modo ancho
 st.set_page_config(page_title="Aplicación de Filtros", layout="wide")
@@ -293,7 +295,9 @@ def main():
                         "Suma (o resta) un valor a cada componente "
                         "(R, G, B) para modificar el brillo global.")
 
-    st.title("Aplicación de Filtros de Imágenes")
+    title_col, download_col = st.columns([0.85, 0.15])
+    with title_col:
+        st.title("Aplicación de Filtros de Imágenes")
 
     if uploaded_file is not None:
         original_image = Image.open(uploaded_file)
@@ -358,6 +362,27 @@ def main():
                     result_image,
                     caption=f"Imagen con ajuste de brillo ({brightness_delta})",
                     use_container_width=True
+                )
+
+            # Después de procesar la imagen, agregamos el botón de descarga
+            with download_col:
+                st.write("")
+                st.write("")
+                buf = BytesIO()
+                result_image.save(buf, format="PNG")
+                file_names = {
+                    "Mosaico": "imagen_mosaico.png",
+                    "Tono de gris": "imagen_gris.png",
+                    "Alto contraste": "imagen_alto_contraste.png",
+                    "Inverso": "imagen_negativo.png",
+                    "Filtro RGB": f"imagen_{rgb_choice}.png",
+                    "Brillo": "imagen_brillo.png"
+                }
+                st.download_button(
+                    label="⬇️ Descargar imagen",
+                    data=buf.getvalue(),
+                    file_name=file_names.get(selected_filter, "imagen_filtrada.png"),
+                    mime="image/png"
                 )
 
     else:

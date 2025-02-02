@@ -51,6 +51,7 @@ En el archivo **requirements.txt** están listadas las dependencias necesarias (
    - **Brillo**: Suma (o resta) un valor a los tres canales `(R, G, B)`, lo cual incrementa o reduce el brillo de la imagen.
 3. **Ajusta** los parámetros en la barra lateral (por ejemplo, tamaño del mosaico, umbral de alto contraste, canal de color, ajuste de brillo, etc.).
 4. Observa cómo se muestra la **imagen original** en la columna izquierda y la **imagen resultante** en la columna derecha.
+5. Se puede descargar la imagen procesada con el botón que parece en la parte superior derecha.
 
 ## Estructura del Proyecto
 
