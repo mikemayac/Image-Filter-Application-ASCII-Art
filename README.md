@@ -19,7 +19,7 @@ En el archivo **requirements.txt** están listadas las dependencias necesarias (
 
 ## Instalación
 
-1. **Clona** o **descarga** este repositorio en tu máquina local.
+1. **Clona** o **descarga** [este repositorio](https://github.com/mikemayac/Image-Filter-Application) en tu máquina local.
 2. Crea un **entorno virtual** (opcional, pero recomendado) e instálalo:
    ```bash
    python -m venv venv
