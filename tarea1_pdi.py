@@ -197,20 +197,19 @@ def main():
         "Alto contraste",
         "Inverso",
         "Filtro RGB",
-        "Brillo"  # Ya implementado
+        "Brillo"
     ]
 
     selected_filter = st.sidebar.selectbox("Selecciona un filtro:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
-    # Parámetros de cada filtro
+    # Parámetros (por defecto)
     block_size = 10
     grayscale_method = "average"
     high_contrast_threshold = 128
     rgb_choice = "red"
-    brightness_delta = 0  # para el filtro de Brillo
+    brightness_delta = 0
 
-    # Configuraciones según el filtro elegido
     if selected_filter == "Mosaico":
         block_size = st.sidebar.number_input(
             "Tamaño de la cuadrícula (px):",
@@ -218,6 +217,11 @@ def main():
             max_value=100,
             value=10
         )
+        # Descripción breve
+        st.sidebar.info("**Filtro Mosaico**\n\n"
+                        "Divide la imagen en bloques de tamaño definido "
+                        "y asigna el color promedio a cada bloque, "
+                        "creando un efecto de mosaico.")
 
     elif selected_filter == "Tono de gris":
         grayscale_choice = st.sidebar.radio(
@@ -228,6 +232,10 @@ def main():
             grayscale_method = "average"
         else:
             grayscale_method = "weighted"
+
+        st.sidebar.info("**Filtro Tono de Gris**\n\n"
+                        "Convierte la imagen a blanco y negro usando "
+                        "el promedio de (R, G, B) o un método ponderado.")
 
     elif selected_filter == "Alto contraste":
         grayscale_choice = st.sidebar.radio(
@@ -246,6 +254,16 @@ def main():
             value=128
         )
 
+        st.sidebar.info("**Filtro Alto Contraste**\n\n"
+                        "Primero convierte la imagen a escala de grises y "
+                        "luego aplica un umbral para hacer cada píxel "
+                        "blanco o negro.")
+
+    elif selected_filter == "Inverso":
+        st.sidebar.info("**Filtro Inverso (Negativo)**\n\n"
+                        "Invierte los colores de la imagen. Cada píxel (R,G,B) "
+                        "pasa a (255-R, 255-G, 255-B).")
+
     elif selected_filter == "Filtro RGB":
         rgb_channel = st.sidebar.radio(
             "Elige el canal a mostrar:",
@@ -258,6 +276,10 @@ def main():
         else:
             rgb_choice = "blue"
 
+        st.sidebar.info("**Filtro RGB**\n\n"
+                        "Muestra únicamente la componente seleccionada (Rojo, Verde o Azul) "
+                        "y establece las otras dos en 0.")
+
     elif selected_filter == "Brillo":
         brightness_delta = st.sidebar.slider(
             "Ajuste de brillo (-255 a 255)",
@@ -266,6 +288,10 @@ def main():
             value=0,
             step=5
         )
+
+        st.sidebar.info("**Filtro de Brillo**\n\n"
+                        "Suma (o resta) un valor a cada componente "
+                        "(R, G, B) para modificar el brillo global.")
 
     st.title("Aplicación de Filtros de Imágenes")
 
@@ -334,10 +360,9 @@ def main():
                     use_container_width=True
                 )
 
-            else:
-                st.warning("Este filtro todavía no está implementado.")
     else:
         st.info("Por favor, sube una imagen para aplicar un filtro.")
+
 
 if __name__ == "__main__":
     main()
