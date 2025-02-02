@@ -106,15 +106,31 @@ def high_contrast_filter(original_image, method="average", threshold=128):
     return gray_image
 
 
+def negative_filter(original_image):
+    """
+    Filtro inverso o negativo de la imagen.
+    Para cada píxel (r, g, b), el nuevo píxel será (255-r, 255-g, 255-b).
+    """
+    image = original_image.copy()
+    width, height = image.size
+    pixels = image.load()
+
+    for y in range(height):
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            pixels[x, y] = (255 - r, 255 - g, 255 - b)
+
+    return image
+
+
 def main():
     st.sidebar.title("Configuraciones y Filtros")
 
-    # Actualizamos la lista de filtros: ahora "Alto contraste" está implementado
     filter_options = [
         "Mosaico",
         "Tono de gris",
         "Alto contraste",
-        "Inverso (pendiente)",
+        "Inverso",  # Nuevo: Filtro Inverso (Negativo)
         "Filtro RGB (pendiente)",
         "Brillo (pendiente)"
     ]
@@ -122,12 +138,11 @@ def main():
     selected_filter = st.sidebar.selectbox("Selecciona un filtro:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
-    # Parámetros de configuración según el filtro
-    block_size = 10  # valor por defecto para mosaico
+    block_size = 10
     grayscale_method = "average"
     high_contrast_threshold = 128
 
-    # Configuraciones específicas en la barra lateral
+    # Configuraciones específicas
     if selected_filter == "Mosaico":
         block_size = st.sidebar.number_input(
             "Tamaño de la cuadrícula (px):",
@@ -137,7 +152,6 @@ def main():
         )
 
     elif selected_filter == "Tono de gris":
-        # Elegimos qué método de conversión usar
         grayscale_choice = st.sidebar.radio(
             "Método de conversión a gris",
             ("(R+G+B)/3", "(0.3*R) + (0.7*G) + (0.1*B)")
@@ -148,7 +162,6 @@ def main():
             grayscale_method = "weighted"
 
     elif selected_filter == "Alto contraste":
-        # Elegimos qué método de conversión a gris usar
         grayscale_choice = st.sidebar.radio(
             "Método de conversión a gris",
             ("(R+G+B)/3", "(0.3*R) + (0.7*G) + (0.1*B)")
@@ -158,7 +171,6 @@ def main():
         else:
             grayscale_method = "weighted"
 
-        # Ajustamos el umbral
         high_contrast_threshold = st.sidebar.slider(
             "Umbral para alto contraste",
             min_value=0,
@@ -206,6 +218,14 @@ def main():
                 st.image(
                     result_image,
                     caption="Imagen con Alto Contraste",
+                    use_container_width=True
+                )
+
+            elif selected_filter == "Inverso":
+                result_image = negative_filter(original_image)
+                st.image(
+                    result_image,
+                    caption="Imagen Inversa (Negativo)",
                     use_container_width=True
                 )
 
