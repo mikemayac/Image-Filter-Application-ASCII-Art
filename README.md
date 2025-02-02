@@ -1,0 +1,1 @@
+streamlit run /Users/mike/Projects/Tarea1ProcesoDigitalDeImagenes/tarea1_pdi.py
