@@ -1,5 +1,7 @@
 # Aplicación de Filtros de Imágenes con Streamlit
 
+### Joel Miguel Maya Castrejón │ mike.maya@ciencias.unam.mx │ 417112602
+
 Este proyecto consiste en una aplicación web interactiva creada con **Python** y **Streamlit** que permite aplicar diferentes filtros a una imagen. Entre los filtros implementados se encuentran:
 
 1. **Mosaico**  
@@ -7,7 +9,7 @@ Este proyecto consiste en una aplicación web interactiva creada con **Python** 
 3. **Alto Contraste**  
 4. **Inverso (Negativo)**  
 5. **Filtro RGB (solo un canal de color)**  
-6. **Brillo**  
+6. **Brillo**
 
 ## Requisitos
 
