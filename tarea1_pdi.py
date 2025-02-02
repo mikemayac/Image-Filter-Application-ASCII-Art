@@ -50,7 +50,7 @@ def grayscale_filter(original_image, method="average"):
     2) Ponderado: (0.3*R + 0.7*G + 0.1*B)
 
     :param original_image: Imagen PIL original.
-    :param method: "average" para la primera forma, "weighted" para la segunda.
+    :param method: "average" o "weighted".
     :return: Nueva imagen en escala de grises.
     """
     image = original_image.copy()
@@ -67,22 +67,53 @@ def grayscale_filter(original_image, method="average"):
                 gray_value = (r + g + b) // 3
             else:
                 # gris = (R*0.3) + (G*0.7) + (B*0.1)
-                # Nota: ajusta los coeficientes según sea necesario
                 gray_value = int(0.3 * r + 0.7 * g + 0.1 * b)
 
+            # Ajustamos a (gray, gray, gray)
             pixels_gray[x, y] = (gray_value, gray_value, gray_value)
 
     return image
 
 
+def high_contrast_filter(original_image, method="average", threshold=128):
+    """
+    Crea un filtro de alto contraste a partir de la imagen original:
+      1. Se convierte a escala de grises (usando average o weighted).
+      2. Se aplica un umbral para determinar si cada píxel es negro o blanco.
+
+    :param original_image: Imagen PIL original.
+    :param method: Método de gris ("average" o "weighted").
+    :param threshold: Umbral de corte para el alto contraste.
+    :return: Imagen en blanco y negro (alto contraste).
+    """
+    # 1. Convertimos a escala de grises (reutilizamos la función anterior)
+    gray_image = grayscale_filter(original_image, method=method)
+
+    # 2. Aplicamos el umbral
+    width, height = gray_image.size
+    pixels = gray_image.load()
+
+    for y in range(height):
+        for x in range(width):
+            r, g, b = pixels[x, y]  # en gris, r = g = b
+            if r < threshold:
+                # Píxel negro
+                pixels[x, y] = (0, 0, 0)
+            else:
+                # Píxel blanco
+                pixels[x, y] = (255, 255, 255)
+
+    return gray_image
+
+
 def main():
     st.sidebar.title("Configuraciones y Filtros")
 
-    # Lista de filtros (ahora con Tono de gris implementado)
+    # Actualizamos la lista de filtros: ahora "Alto contraste" está implementado
     filter_options = [
         "Mosaico",
         "Tono de gris",
-        "Alto contraste (pendiente)",
+        "Alto contraste",
         "Inverso (pendiente)",
         "Filtro RGB (pendiente)",
         "Brillo (pendiente)"
@@ -93,13 +124,18 @@ def main():
 
     # Parámetros de configuración según el filtro
     block_size = 10  # valor por defecto para mosaico
-    grayscale_method = "average"  # valor por defecto para tono de gris
+    grayscale_method = "average"
+    high_contrast_threshold = 128
 
+    # Configuraciones específicas en la barra lateral
     if selected_filter == "Mosaico":
-        block_size = st.sidebar.number_input("Tamaño de la cuadrícula (px):",
-                                             min_value=1,
-                                             max_value=100,
-                                             value=10)
+        block_size = st.sidebar.number_input(
+            "Tamaño de la cuadrícula (px):",
+            min_value=1,
+            max_value=100,
+            value=10
+        )
+
     elif selected_filter == "Tono de gris":
         # Elegimos qué método de conversión usar
         grayscale_choice = st.sidebar.radio(
@@ -110,6 +146,25 @@ def main():
             grayscale_method = "average"
         else:
             grayscale_method = "weighted"
+
+    elif selected_filter == "Alto contraste":
+        # Elegimos qué método de conversión a gris usar
+        grayscale_choice = st.sidebar.radio(
+            "Método de conversión a gris",
+            ("(R+G+B)/3", "(0.3*R) + (0.7*G) + (0.1*B)")
+        )
+        if grayscale_choice == "(R+G+B)/3":
+            grayscale_method = "average"
+        else:
+            grayscale_method = "weighted"
+
+        # Ajustamos el umbral
+        high_contrast_threshold = st.sidebar.slider(
+            "Umbral para alto contraste",
+            min_value=0,
+            max_value=255,
+            value=128
+        )
 
     st.title("Aplicación de Filtros de Imágenes")
 
@@ -126,7 +181,6 @@ def main():
             )
 
         with col2:
-            # Aplicamos el filtro elegido
             if selected_filter == "Mosaico":
                 result_image = mosaic_filter(original_image, block_size)
                 st.image(
@@ -140,6 +194,18 @@ def main():
                 st.image(
                     result_image,
                     caption="Imagen en Escala de Grises",
+                    use_container_width=True
+                )
+
+            elif selected_filter == "Alto contraste":
+                result_image = high_contrast_filter(
+                    original_image,
+                    method=grayscale_method,
+                    threshold=high_contrast_threshold
+                )
+                st.image(
+                    result_image,
+                    caption="Imagen con Alto Contraste",
                     use_container_width=True
                 )
 
