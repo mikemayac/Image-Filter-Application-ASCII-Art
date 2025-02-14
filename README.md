@@ -1,81 +1,79 @@
-# Aplicación de Filtros de Imágenes con Streamlit
+# Aplicación ASCII Art con Streamlit
 
 ### Joel Miguel Maya Castrejón │ mike.maya@ciencias.unam.mx │ 417112602
 
-Este proyecto consiste en una aplicación web interactiva creada con **Python** y **Streamlit** que permite aplicar diferentes filtros a una imagen. Entre los filtros implementados se encuentran:
+Este proyecto consiste en una aplicación web interactiva, creada con **Python** y **Streamlit**, que convierte imágenes en diferentes formas de ASCII Art. Cada píxel se analiza y se reemplaza por caracteres que simulan la imagen original. Hay cinco filtros principales:
 
-1. **Mosaico**  
-2. **Tono de Gris**  
-3. **Alto Contraste**  
-4. **Inverso (Negativo)**  
-5. **Filtro RGB (solo un canal de color)**  
-6. **Brillo**
+1. **Letra (M/@) a Color**  
+2. **Letra (M/@) en Gris**  
+3. **Conjunto de caracteres en B/N**  
+4. **Texto personalizado a Color**  
+5. **Naipes (en blanco/negro)**
 
 ## Requisitos
 
-- Python 3.12 o superior.
-- [Streamlit](https://docs.streamlit.io/) para el desarrollo de la interfaz.
-- [Pillow](https://pillow.readthedocs.io/) (PIL) para leer las imágenes.
+- Python 3.12 o superior  
+- [Streamlit](https://docs.streamlit.io/)  
+- [Pillow (PIL)](https://pillow.readthedocs.io/)  
 
-En el archivo **requirements.txt** están listadas las dependencias necesarias (Streamlit y Pillow). Asegúrate de instalarlas antes de ejecutar la aplicación.
+Están listados en el archivo **requirements.txt**.
 
 ## Instalación
 
-1. **Clona** o **descarga** [este repositorio](https://github.com/mikemayac/Image-Filter-Application) en tu máquina local.
-2. Crea un **entorno virtual** (opcional, pero recomendado) e instálalo:
+1. **Clona** o **descarga** el repositorio en tu equipo.
+2. Crea un **entorno virtual** (recomendado):
    ```bash
    python -m venv venv
-   source venv/bin/activate        # En Linux/Mac
+   source venv/bin/activate  # En Linux/Mac
    # o en Windows: venv\Scripts\activate
    ```
-3. Instala los paquetes necesarios:
+3. Instala las dependencias:
    ```bash
    pip install -r requirements.txt
    ```
 
-## Ejecución de la Aplicación
+## Ejecución
 
-1. Dentro del entorno virtual y en la carpeta donde se encuentra el archivo principal `tarea1_pdi.py`, ejecuta:
+1. Dentro del entorno virtual, ubícate donde esté `tarea2_pdi_ASCII_Art.py`.
+2. Ejecuta:
    ```bash
    streamlit run tarea2_pdi_ASCII_Art.py
    ```
-2. Automáticamente se abrirá tu navegador mostrando la interfaz de la aplicación. Si no se abre, puedes copiar la URL que aparece en la terminal y pegarla en tu navegador.
+3. Se abrirá tu navegador con la aplicación. Si no se abre, copia la URL que aparece en la terminal y pégala en tu navegador.
 
 ## Uso de la Aplicación
 
-1. **Sube una imagen** en la barra lateral (sidebar). Acepta formatos `JPG`, `JPEG` o `PNG`. En caso de que la imagen esté en formato RGBA la convierte a RGB.
-2. **Selecciona** el filtro que deseas aplicar desde la lista desplegable (selectbox):
-   - **Mosaico**: Divide la imagen en bloques y asigna el color promedio a cada bloque.
-   - **Tono de Gris**: Convierte la imagen a blanco y negro, usando un promedio `(R+G+B)/3` o un método ponderado `(0.3*R + 0.7*G + 0.1*B)`.
-   - **Alto Contraste**: Primero convierte a gris, luego aplica un umbral para convertir los píxeles a blanco o negro.
-   - **Inverso (Negativo)**: Cada píxel `(R, G, B)` se convierte en `(255-R, 255-G, 255-B)`.
-   - **Filtro RGB**: Muestra únicamente un canal (Rojo, Verde o Azul), poniendo los demás en `0`.
-   - **Brillo**: Suma (o resta) un valor a los tres canales `(R, G, B)`, lo cual incrementa o reduce el brillo de la imagen.
-3. **Ajusta** los parámetros en la barra lateral (por ejemplo, tamaño del mosaico, umbral de alto contraste, canal de color, ajuste de brillo, etc.).
-4. Observa cómo se muestra la **imagen original** en la columna izquierda y la **imagen resultante** en la columna derecha.
-5. Se puede descargar la imagen procesada con el botón que parece en la parte superior derecha.
+1. **Sube una imagen** (`jpg`, `jpeg` o `png`) desde la barra lateral de Streamlit.
+2. **Selecciona** uno de los cinco filtros ASCII:
+   - **Letra (M/@) a Color**: Cada bloque de pixeles se convierte en la misma letra con el color promedio.
+   - **Letra (M/@) en Gris**: Igual que el anterior, pero en escala de grises.
+   - **Conjunto de caracteres en B/N**: Mapea diferentes símbolos a diferentes niveles de brillo (texto negro, fondo blanco).
+   - **Texto personalizado a Color**: Se toma una frase del usuario, usando cada caracter en color promedio.
+   - **Naipes (B/N)**: Emplea una fuente de cartas para representar distintos niveles de brillo.  
+3. **Ajusta** los parámetros (tamaño de celda, letra, frase, etc.) en la barra lateral.
+4. Observa el **antes** (columna izquierda) y el **resultado** (columna derecha).
+5. **Descarga** la imagen procesada con el botón disponible.
 
-## Estructura del Proyecto
+## Estructura
 
 ```
-├── tarea1_pdi.py          # Código principal de la aplicación
-│── .streamlit/            # Capeta de configuración 
-│    └── config.toml       # Archivo usado para configuración del peso de las imágenes
-├── README.md              # Archivo de documentación
-├── requirements.txt       # Dependencias del proyecto
-└── venv/                  # Entorno virtual
+├── tarea2_pdi_ASCII_Art.py    # Código principal de la aplicación
+├── cards.ttf                  # Fuente local (opcional) para el filtro de naipes
+├── requirements.txt           # Dependencias del proyecto
+├── .streamlit/                # Configuración opcional de Streamlit
+│   └── config.toml
+├── README.md                  # Este archivo
+└── venv/                      # Entorno virtual (opcional)
 ```
 
 ## Contribuir
 
-Si deseas contribuir:
-
-1. Haz un **fork** de este repositorio.
-2. Crea una **rama** con una nueva funcionalidad o corrección de errores: `git checkout -b nueva-funcionalidad`.
-3. Realiza tus cambios y haz **commit**: `git commit -m 'Agrega nueva funcionalidad'`.
-4. Haz un **push** a tu repositorio: `git push origin nueva-funcionalidad`.
-5. Crea un **Pull Request** en este repositorio para revisar y fusionar tus cambios.
+1. Haz un **fork** del repositorio.
+2. Crea una **rama** para tus cambios: `git checkout -b mi-mejora`.
+3. Realiza los cambios y haz commit: `git commit -m "Mi mejora"`.
+4. Haz push a tu rama: `git push origin mi-mejora`.
+5. Abre un **Pull Request** en el repositorio original.
 
 ## Licencia
 
-MIT.
+Este proyecto se distribuye bajo la licencia [MIT](LICENSE).
