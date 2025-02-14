@@ -124,13 +124,71 @@ def ascii_art_m_grayscale(original_image, cell_size=10, character="M"):
     return new_image
 
 
-def ascii_art_chars_bn_placeholder(original_image):
+def ascii_art_chars_bn(original_image, cell_size=10):
     """
-    Placeholder para convertir la imagen en ASCII usando un conjunto de caracteres
-    en blanco y negro, simulando distintos niveles de brillo.
-    (Pendiente de implementar)
+    Convierte la imagen en ASCII usando un conjunto de caracteres en B/N
+    (simulando distintos niveles de brillo). No hay color ni grises en el texto,
+    solo texto negro sobre fondo blanco.
     """
-    return original_image
+    width, height = original_image.size
+    pixels = original_image.load()
+
+    # Escala de caracteres (desde "más oscuro" hasta "más claro")
+    # Puedes ajustar o reordenar a tu gusto. El último puede ser un espacio en blanco.
+    # Ejemplo: "MNH#QNAO0Y2$%+.- "
+    char_scale = "MNH#QNAO0Y2$%+.- "
+
+    # Nueva imagen en blanco (fondo) donde dibujaremos el resultado
+    new_image = Image.new("RGB", (width, height), color=(255, 255, 255))
+    draw = ImageDraw.Draw(new_image)
+
+    # Cargamos la fuente (prueba con load_default o con una fuente TTF)
+    try:
+        # font = ImageFont.truetype("arial.ttf", cell_size)
+        font = ImageFont.load_default()
+    except:
+        font = ImageFont.load_default()
+
+    # Recorremos la imagen en bloques de cell_size
+    for y in range(0, height, cell_size):
+        for x in range(0, width, cell_size):
+            sum_r, sum_g, sum_b = 0, 0, 0
+            count = 0
+
+            # Calculamos el brillo promedio en el bloque
+            for by in range(y, min(y + cell_size, height)):
+                for bx in range(x, min(x + cell_size, width)):
+                    r, g, b = pixels[bx, by]
+                    sum_r += r
+                    sum_g += g
+                    sum_b += b
+                    count += 1
+
+            avg_r = sum_r // count
+            avg_g = sum_g // count
+            avg_b = sum_b // count
+
+            # Brillo en [0..255]
+            brightness = (avg_r + avg_g + avg_b) // 3
+
+            # Mapeamos el brillo a un índice de la escala de caracteres
+            # Escala normaliza de 0..255 -> 0..(len(char_scale)-1)
+            num_chars = len(char_scale)
+            char_index = brightness * (num_chars - 1) // 255
+            chosen_char = char_scale[char_index]
+
+            # Medimos el tamaño del carácter
+            text_w, text_h = get_text_dimensions(draw, chosen_char, font)
+
+            # Calculamos posición para centrarlo dentro del bloque
+            cx = x + (cell_size - text_w) // 2
+            cy = y + (cell_size - text_h) // 2
+
+            # Dibujamos con tinta negra (0,0,0)
+            draw.text((cx, cy), chosen_char, font=font, fill=(0, 0, 0))
+
+    return new_image
+
 
 def ascii_art_custom_text_placeholder(original_image):
     """
@@ -166,7 +224,6 @@ def main():
     selected_filter = st.sidebar.selectbox("Selecciona un tipo de ASCII Art:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
-    # Parámetros de configuraciones según el filtro
     if selected_filter == "ASCII - Letra (M/@) Color":
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
         character_choice = st.sidebar.radio("Elige la letra:", ("M", "@"))
@@ -175,50 +232,39 @@ def main():
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
         character_choice = st.sidebar.radio("Elige la letra:", ("M", "@"))
 
-    elif selected_filter == "ASCII - Texto Custom a Color":
-        # Parámetro que se usará más adelante al implementar el filtro
-        user_text = st.sidebar.text_input("Texto/Frase para el ASCII Art:", value="Mi frase aquí")
+    elif selected_filter == "ASCII - Conjunto de caracteres B/N":
+        cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
+        st.sidebar.info("Usa una escala de caracteres en B/N para simular brillo.\n"
+                        "No hay colores intermedios: sólo texto negro en fondo blanco.")
 
-    # (Podrías añadir más configuraciones para los demás filtros según sea necesario)
+    elif selected_filter == "ASCII - Texto Custom a Color":
+        user_text = st.sidebar.text_input("Texto/Frase para el ASCII Art:", value="Mi frase aquí")
 
     title_col, download_col = st.columns([0.85, 0.15])
     with title_col:
         st.title("Aplicación ASCII Art")
 
     if uploaded_file is not None:
-        # Cargar la imagen (convertida a RGB)
         original_image = Image.open(uploaded_file).convert('RGB')
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.image(
-                original_image,
-                caption="Imagen Original",
-                use_container_width=True
-            )
+            st.image(original_image, caption="Imagen Original", use_container_width=True)
 
-        # Aplicamos el filtro seleccionado
         with col2:
             if selected_filter == "ASCII - Letra (M/@) Color":
-                result_image = ascii_art_m_color(
-                    original_image,
-                    cell_size=cell_size,
-                    character=character_choice
-                )
+                result_image = ascii_art_m_color(original_image, cell_size, character_choice)
                 st.image(result_image, caption="ASCII con color", use_container_width=True)
 
             elif selected_filter == "ASCII - Letra (M/@) Gris":
-                result_image = ascii_art_m_grayscale(
-                    original_image,
-                    cell_size=cell_size,
-                    character=character_choice
-                )
-                st.image(result_image, caption="ASCII en tonos de gris", use_container_width=True)
+                result_image = ascii_art_m_grayscale(original_image, cell_size, character_choice)
+                st.image(result_image, caption="ASCII en gris", use_container_width=True)
 
             elif selected_filter == "ASCII - Conjunto de caracteres B/N":
-                result_image = ascii_art_chars_bn_placeholder(original_image)
-                st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
+                # Aquí llamamos a la nueva función
+                result_image = ascii_art_chars_bn(original_image, cell_size)
+                st.image(result_image, caption="ASCII con letras B/N", use_container_width=True)
 
             elif selected_filter == "ASCII - Texto Custom a Color":
                 result_image = ascii_art_custom_text_placeholder(original_image)
@@ -228,10 +274,10 @@ def main():
                 result_image = ascii_art_domino_cards_placeholder(original_image)
                 st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
 
-            # Sección de descarga
+            # Botón de descarga
             with download_col:
-                st.write("")  # Espaciado
-                st.write("")  # Espaciado
+                st.write("")
+                st.write("")
                 buf = BytesIO()
                 result_image.save(buf, format="PNG")
 
@@ -243,12 +289,11 @@ def main():
                     "ASCII - Fichas de Dominó/Naipes (B/N)": "ascii_domino.png"
                 }
                 st.download_button(
-                    label="⬇️ Descargar resultado",
+                    label="⬇️ Descargar",
                     data=buf.getvalue(),
                     file_name=file_names.get(selected_filter, "ascii_art.png"),
                     mime="image/png"
                 )
-
     else:
         st.info("Por favor, sube una imagen para aplicar un filtro ASCII.")
 
