@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 
@@ -253,54 +254,72 @@ def ascii_art_custom_text_color(original_image, cell_size=10, user_text="Hola"):
 
 
 def ascii_art_cards(
-    original_image,
-    cell_size=15,
-    mode="Naipes blancos con símbolos negros"
+        original_image,
+        cell_size=15,
+        mode="Naipes blancos con símbolos negros"
 ):
     """
-    Convierte la imagen en ASCII usando símbolos de naipes en blanco/negro
-    para distintos niveles de brillo. Requiere tener instalada la fuente adecuada
-    (cards.ttf u otra con soporte de glifos de naipes) para verse con claridad.
+    Convierte la imagen en ASCII usando cartas mapeadas a caracteres ASCII
+    (de 'A' a 'z' en U+0041..U+007A), en blanco/negro para simular distintos
+    niveles de brillo. Se asume que tu fuente CARDS.TTF asigna cada caracter
+    (A..Z, a..z) a una carta distinta (4 palos x 13 valores).
 
-    mode puede ser:
-      - "Naipes blancos con símbolos negros"
-      - "Naipes negros con símbolos blancos"
+    :param original_image: PIL.Image a convertir
+    :param cell_size: Tamaño de la celda (px) para cada "caracter/carta"
+    :param mode: "Naipes blancos con símbolos negros" o "Naipes negros con símbolos blancos"
+
+    Requiere tener en la misma carpeta un archivo "CARDS.TTF" con los glifos
+    correspondientes a 'A'..'Z', 'a'..'z'.
     """
-
+    # Obtener dimensiones
     width, height = original_image.size
     pixels = original_image.load()
 
-    # Escala de cartas (del más oscuro al más claro)
-    # Ajusta según las cartas que tu fuente soporte mejor.
-    cards_scale = "🂠🂡🂢🂣🂤🂥🂦 "
+    # Escala de caracteres (ejemplo). Ordenada de 'A'..'Z' y luego 'a'..'z',
+    # con un espacio final por si quieres representar los píxeles más claros.
+    # Ajusta el orden si tu fuente asocia los caracteres de manera distinta.
+    cards_scale = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "
 
-    # Color de fondo vs. color del texto
+    # Elegir color de fondo y del texto
     if mode == "Naipes blancos con símbolos negros":
         background_color = (255, 255, 255)  # Fondo blanco
-        fill_color = (0, 0, 0)             # Símbolos negros
+        fill_color = (0, 0, 0)  # Texto negro
     else:
-        background_color = (0, 0, 0)       # Fondo negro
-        fill_color = (255, 255, 255)       # Símbolos blancos
+        background_color = (0, 0, 0)  # Fondo negro
+        fill_color = (255, 255, 255)  # Texto blanco
 
-    # Creamos la imagen base
+    # Crear imagen de salida
     new_image = Image.new("RGB", (width, height), color=background_color)
     draw = ImageDraw.Draw(new_image)
 
-    # Cargamos la fuente. Lo ideal es un TTF de cartas si lo tienes.
+    # Cargar la fuente local (CARDS.TTF) desde el mismo directorio
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    font_path = os.path.join(script_dir, "CARDS.TTF")
+
     try:
-        # font = ImageFont.truetype("cards.ttf", cell_size)
-        font = ImageFont.load_default()
+        font = ImageFont.truetype(font_path, cell_size)
     except:
+        # Fallback si la fuente no se encuentra
         font = ImageFont.load_default()
 
     num_symbols = len(cards_scale)
 
+    # Función auxiliar para medir tamaño de texto
+    def get_text_dimensions_local(draw_obj, text, font_obj):
+        if hasattr(draw_obj, "textbbox"):
+            bbox = draw_obj.textbbox((0, 0), text, font=font_obj)
+            return bbox[2] - bbox[0], bbox[3] - bbox[1]
+        else:
+            mask = font_obj.getmask(text)
+            return mask.size
+
+    # Recorrer la imagen en bloques de cell_size
     for y in range(0, height, cell_size):
         for x in range(0, width, cell_size):
-            sum_r, sum_g, sum_b = 0, 0, 0
+            sum_r = sum_g = sum_b = 0
             count = 0
 
-            # Calculamos el brillo promedio en el bloque
+            # Calcular brillo promedio
             for by in range(y, min(y + cell_size, height)):
                 for bx in range(x, min(x + cell_size, width)):
                     r, g, b = pixels[bx, by]
@@ -309,23 +328,30 @@ def ascii_art_cards(
                     sum_b += b
                     count += 1
 
+            if count == 0:
+                continue  # Evitar división por cero (imagen vacía o error)
+
             avg_r = sum_r // count
             avg_g = sum_g // count
             avg_b = sum_b // count
-            brightness = (avg_r + avg_g + avg_b) // 3  # [0..255]
+            brightness = (avg_r + avg_g + avg_b) // 3  # valor de [0..255]
 
-            # Mapeamos brillo -> índice en la escala
+            # Mapear brillo a índice en la escala
             char_index = brightness * (num_symbols - 1) // 255
             card_char = cards_scale[char_index]
 
-            # Medimos y dibujamos
-            text_w, text_h = get_text_dimensions(draw, card_char, font)
+            # Medir el ancho/alto del caracter
+            text_w, text_h = get_text_dimensions_local(draw, card_char, font)
+
+            # Calcular posición para centrar
             cx = x + (cell_size - text_w) // 2
             cy = y + (cell_size - text_h) // 2
 
+            # Dibujar la "carta"
             draw.text((cx, cy), card_char, font=font, fill=fill_color)
 
     return new_image
+
 
 # =============================================================================
 # FUNCIÓN PRINCIPAL DE STREAMLIT
@@ -368,7 +394,7 @@ def main():
             ["Naipes blancos con símbolos negros", "Naipes negros con símbolos blancos"]
         )
         st.sidebar.info(
-            "Requiere fuente especial de cartas (e.g. 'cards.ttf') para ver "
+            "Requiere fuente especial de cartas (e.g. 'CARDS.TTF') para ver "
             "correctamente los símbolos de naipes.\n"
             "Si no la tienes, podrías ver cuadraditos o emojis en lugar de cartas."
         )
