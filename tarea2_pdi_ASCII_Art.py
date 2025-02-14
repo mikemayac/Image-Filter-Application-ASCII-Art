@@ -190,13 +190,67 @@ def ascii_art_chars_bn(original_image, cell_size=10):
     return new_image
 
 
-def ascii_art_custom_text_placeholder(original_image):
+def ascii_art_custom_text_color(original_image, cell_size=10, user_text="Hola"):
     """
-    Placeholder para convertir la imagen en ASCII usando un texto o frase
-    definida por el usuario, con el color promedio real de la imagen.
-    (Pendiente de implementar)
+    Convierte la imagen en ASCII usando un texto/frase definido por el usuario.
+    Cada bloque se dibuja con el siguiente carácter de 'user_text',
+    rellenado con el color promedio de ese bloque.
     """
-    return original_image
+    width, height = original_image.size
+    pixels = original_image.load()
+
+    # Crear una nueva imagen en blanco (RGB) donde dibujar el resultado
+    new_image = Image.new("RGB", (width, height), color=(255, 255, 255))
+    draw = ImageDraw.Draw(new_image)
+
+    # Cargar la fuente (puede ser la por defecto o una TTF)
+    try:
+        # font = ImageFont.truetype("arial.ttf", cell_size)
+        font = ImageFont.load_default()
+    except:
+        font = ImageFont.load_default()
+
+    # Asegurarnos de tener al menos 1 caracter en user_text para evitar divisiones por cero
+    if len(user_text) == 0:
+        user_text = " "  # Si está vacío, forzamos un espacio
+
+    text_index = 0
+    text_length = len(user_text)
+
+    # Recorrer la imagen en bloques de cell_size
+    for y in range(0, height, cell_size):
+        for x in range(0, width, cell_size):
+            sum_r, sum_g, sum_b = 0, 0, 0
+            count = 0
+
+            # Calculamos el color promedio
+            for by in range(y, min(y + cell_size, height)):
+                for bx in range(x, min(x + cell_size, width)):
+                    r, g, b = pixels[bx, by]
+                    sum_r += r
+                    sum_g += g
+                    sum_b += b
+                    count += 1
+
+            avg_r = sum_r // count
+            avg_g = sum_g // count
+            avg_b = sum_b // count
+
+            fill_color = (avg_r, avg_g, avg_b)
+
+            # Tomar el siguiente carácter de la frase
+            current_char = user_text[text_index]
+            text_index = (text_index + 1) % text_length  # avanzar y hacer wrap
+
+            # Medir el tamaño del carácter para centrarlo
+            text_w, text_h = get_text_dimensions(draw, current_char, font)
+            cx = x + (cell_size - text_w) // 2
+            cy = y + (cell_size - text_h) // 2
+
+            draw.text((cx, cy), current_char, font=font, fill=fill_color)
+
+    return new_image
+
 
 def ascii_art_domino_cards_placeholder(original_image):
     """
@@ -224,6 +278,7 @@ def main():
     selected_filter = st.sidebar.selectbox("Selecciona un tipo de ASCII Art:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
+    # Parámetros para cada filtro
     if selected_filter == "ASCII - Letra (M/@) Color":
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
         character_choice = st.sidebar.radio("Elige la letra:", ("M", "@"))
@@ -234,12 +289,14 @@ def main():
 
     elif selected_filter == "ASCII - Conjunto de caracteres B/N":
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
-        st.sidebar.info("Usa una escala de caracteres en B/N para simular brillo.\n"
-                        "No hay colores intermedios: sólo texto negro en fondo blanco.")
+        st.sidebar.info("Usa un conjunto de caracteres en B/N para simular distintos niveles de brillo.")
 
     elif selected_filter == "ASCII - Texto Custom a Color":
+        cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
         user_text = st.sidebar.text_input("Texto/Frase para el ASCII Art:", value="Mi frase aquí")
+        st.sidebar.info("Cada celda se dibujará con el siguiente caracter de tu frase, en el color promedio de la región.")
 
+    # Layout principal
     title_col, download_col = st.columns([0.85, 0.15])
     with title_col:
         st.title("Aplicación ASCII Art")
@@ -248,7 +305,6 @@ def main():
         original_image = Image.open(uploaded_file).convert('RGB')
 
         col1, col2 = st.columns(2)
-
         with col1:
             st.image(original_image, caption="Imagen Original", use_container_width=True)
 
@@ -262,13 +318,13 @@ def main():
                 st.image(result_image, caption="ASCII en gris", use_container_width=True)
 
             elif selected_filter == "ASCII - Conjunto de caracteres B/N":
-                # Aquí llamamos a la nueva función
                 result_image = ascii_art_chars_bn(original_image, cell_size)
-                st.image(result_image, caption="ASCII con letras B/N", use_container_width=True)
+                st.image(result_image, caption="ASCII en B/N", use_container_width=True)
 
             elif selected_filter == "ASCII - Texto Custom a Color":
-                result_image = ascii_art_custom_text_placeholder(original_image)
-                st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
+                # Nueva función implementada
+                result_image = ascii_art_custom_text_color(original_image, cell_size, user_text)
+                st.image(result_image, caption="ASCII con texto custom a color", use_container_width=True)
 
             elif selected_filter == "ASCII - Fichas de Dominó/Naipes (B/N)":
                 result_image = ascii_art_domino_cards_placeholder(original_image)
@@ -288,14 +344,16 @@ def main():
                     "ASCII - Texto Custom a Color": "ascii_texto_color.png",
                     "ASCII - Fichas de Dominó/Naipes (B/N)": "ascii_domino.png"
                 }
+
                 st.download_button(
-                    label="⬇️ Descargar",
+                    label="⬇️ Descargar resultado",
                     data=buf.getvalue(),
                     file_name=file_names.get(selected_filter, "ascii_art.png"),
                     mime="image/png"
                 )
     else:
         st.info("Por favor, sube una imagen para aplicar un filtro ASCII.")
+
 
 
 if __name__ == "__main__":
