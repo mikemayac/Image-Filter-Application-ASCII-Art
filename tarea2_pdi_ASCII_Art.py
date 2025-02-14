@@ -70,13 +70,59 @@ def ascii_art_m_color(original_image, cell_size=10, character="M"):
 
 
 
-def ascii_art_m_grayscale_placeholder(original_image):
+def ascii_art_m_grayscale(original_image, cell_size=10, character="M"):
     """
-    Placeholder para convertir la imagen en ASCII usando la misma letra (M/@)
-    en tonos de gris.
-    (Pendiente de implementar)
+    Convierte la imagen en ASCII usando la misma letra (M/@),
+    pero en tonos de gris (el gris promedio de cada bloque).
     """
-    return original_image
+    # Dimensiones de la imagen
+    width, height = original_image.size
+    pixels = original_image.load()
+
+    # Nueva imagen en blanco donde dibujar el resultado
+    new_image = Image.new("RGB", (width, height), color=(255, 255, 255))
+    draw = ImageDraw.Draw(new_image)
+
+    # Cargar fuente
+    try:
+        # font = ImageFont.truetype("arial.ttf", cell_size)
+        font = ImageFont.load_default()
+    except:
+        font = ImageFont.load_default()
+
+    # Recorremos en bloques de cell_size
+    for y in range(0, height, cell_size):
+        for x in range(0, width, cell_size):
+            sum_r, sum_g, sum_b = 0, 0, 0
+            count = 0
+
+            # Calcular color promedio del bloque
+            for by in range(y, min(y + cell_size, height)):
+                for bx in range(x, min(x + cell_size, width)):
+                    r, g, b = pixels[bx, by]
+                    sum_r += r
+                    sum_g += g
+                    sum_b += b
+                    count += 1
+
+            avg_r = sum_r // count
+            avg_g = sum_g // count
+            avg_b = sum_b // count
+
+            # Convertimos a gris (promedio)
+            gray_value = (avg_r + avg_g + avg_b) // 3
+            fill_color = (gray_value, gray_value, gray_value)
+
+            # Medir el carácter y centrarlo
+            text_w, text_h = get_text_dimensions(draw, character, font)
+            cx = x + (cell_size - text_w) // 2
+            cy = y + (cell_size - text_h) // 2
+
+            # Dibujar la letra en tonos de gris
+            draw.text((cx, cy), character, font=font, fill=fill_color)
+
+    return new_image
+
 
 def ascii_art_chars_bn_placeholder(original_image):
     """
@@ -109,7 +155,6 @@ def ascii_art_domino_cards_placeholder(original_image):
 def main():
     st.sidebar.title("Configuraciones y ASCII Art")
 
-    # Menú lateral con los 5 filtros nuevos
     filter_options = [
         "ASCII - Letra (M/@) Color",
         "ASCII - Letra (M/@) Gris",
@@ -121,31 +166,27 @@ def main():
     selected_filter = st.sidebar.selectbox("Selecciona un tipo de ASCII Art:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
-    # Parámetros comunes o específicos
+    # Parámetros de configuraciones según el filtro
     if selected_filter == "ASCII - Letra (M/@) Color":
-        # Tamaño de celda
-        cell_size = st.sidebar.slider(
-            "Tamaño de celda (px)",
-            min_value=1,
-            max_value=50,
-            value=10
-        )
-        # Elección de carácter
-        character_choice = st.sidebar.radio(
-            "Elige la letra:",
-            ("M", "@")
-        )
+        cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
+        character_choice = st.sidebar.radio("Elige la letra:", ("M", "@"))
 
-    if selected_filter == "ASCII - Texto Custom a Color":
+    elif selected_filter == "ASCII - Letra (M/@) Gris":
+        cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
+        character_choice = st.sidebar.radio("Elige la letra:", ("M", "@"))
+
+    elif selected_filter == "ASCII - Texto Custom a Color":
+        # Parámetro que se usará más adelante al implementar el filtro
         user_text = st.sidebar.text_input("Texto/Frase para el ASCII Art:", value="Mi frase aquí")
-        # (luego se podrá usar en la función real)
+
+    # (Podrías añadir más configuraciones para los demás filtros según sea necesario)
 
     title_col, download_col = st.columns([0.85, 0.15])
     with title_col:
         st.title("Aplicación ASCII Art")
 
     if uploaded_file is not None:
-        # Cargar la imagen original (convertida a RGB)
+        # Cargar la imagen (convertida a RGB)
         original_image = Image.open(uploaded_file).convert('RGB')
 
         col1, col2 = st.columns(2)
@@ -157,56 +198,40 @@ def main():
                 use_container_width=True
             )
 
-        # Aplicar el filtro correspondiente
+        # Aplicamos el filtro seleccionado
         with col2:
             if selected_filter == "ASCII - Letra (M/@) Color":
-                # Llamamos a nuestra función ya implementada
-                result_image = ascii_art_m_color(original_image,
-                                                 cell_size=cell_size,
-                                                 character=character_choice)
-                st.image(
-                    result_image,
-                    caption=f"ASCII Art con '{character_choice}' a color",
-                    use_container_width=True
+                result_image = ascii_art_m_color(
+                    original_image,
+                    cell_size=cell_size,
+                    character=character_choice
                 )
+                st.image(result_image, caption="ASCII con color", use_container_width=True)
 
             elif selected_filter == "ASCII - Letra (M/@) Gris":
-                result_image = ascii_art_m_grayscale_placeholder(original_image)
-                st.image(
-                    result_image,
-                    caption="Resultado (Placeholder)",
-                    use_container_width=True
+                result_image = ascii_art_m_grayscale(
+                    original_image,
+                    cell_size=cell_size,
+                    character=character_choice
                 )
+                st.image(result_image, caption="ASCII en tonos de gris", use_container_width=True)
 
             elif selected_filter == "ASCII - Conjunto de caracteres B/N":
                 result_image = ascii_art_chars_bn_placeholder(original_image)
-                st.image(
-                    result_image,
-                    caption="Resultado (Placeholder)",
-                    use_container_width=True
-                )
+                st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
 
             elif selected_filter == "ASCII - Texto Custom a Color":
-                # Aquí usaríamos user_text en el futuro
                 result_image = ascii_art_custom_text_placeholder(original_image)
-                st.image(
-                    result_image,
-                    caption="Resultado (Placeholder)",
-                    use_container_width=True
-                )
+                st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
 
             elif selected_filter == "ASCII - Fichas de Dominó/Naipes (B/N)":
                 result_image = ascii_art_domino_cards_placeholder(original_image)
-                st.image(
-                    result_image,
-                    caption="Resultado (Placeholder)",
-                    use_container_width=True
-                )
+                st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
 
-            # Botón de descarga
+            # Sección de descarga
             with download_col:
-                st.write("")
-                st.write("")
+                st.write("")  # Espaciado
+                st.write("")  # Espaciado
                 buf = BytesIO()
                 result_image.save(buf, format="PNG")
 
@@ -217,9 +242,8 @@ def main():
                     "ASCII - Texto Custom a Color": "ascii_texto_color.png",
                     "ASCII - Fichas de Dominó/Naipes (B/N)": "ascii_domino.png"
                 }
-
                 st.download_button(
-                    label="⬇️ Descargar",
+                    label="⬇️ Descargar resultado",
                     data=buf.getvalue(),
                     file_name=file_names.get(selected_filter, "ascii_art.png"),
                     mime="image/png"
