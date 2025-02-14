@@ -135,8 +135,6 @@ def ascii_art_chars_bn(original_image, cell_size=10):
     pixels = original_image.load()
 
     # Escala de caracteres (desde "más oscuro" hasta "más claro")
-    # Puedes ajustar o reordenar a tu gusto. El último puede ser un espacio en blanco.
-    # Ejemplo: "MNH#QNAO0Y2$%+.- "
     char_scale = "MNH#QNAO0Y2$%+.- "
 
     # Nueva imagen en blanco (fondo) donde dibujaremos el resultado
@@ -277,7 +275,6 @@ def ascii_art_cards(
 
     # Escala de caracteres (ejemplo). Ordenada de 'A'..'Z' y luego 'a'..'z',
     # con un espacio final por si quieres representar los píxeles más claros.
-    # Ajusta el orden si tu fuente asocia los caracteres de manera distinta.
     cards_scale = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "
 
     # Elegir color de fondo y del texto
