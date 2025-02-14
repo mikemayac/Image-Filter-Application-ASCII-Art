@@ -20,7 +20,7 @@ Están listados en el archivo **requirements.txt**.
 
 ## Instalación
 
-1. **Clona** o **descarga** el repositorio en tu equipo.
+1. **[Clona aquí](https://github.com/mikemayac/Image-Filter-Application-ASCII-Art)** o **descarga** el repositorio en tu equipo.
 2. Crea un **entorno virtual** (recomendado):
    ```bash
    python -m venv venv
