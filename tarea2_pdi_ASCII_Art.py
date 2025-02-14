@@ -252,13 +252,80 @@ def ascii_art_custom_text_color(original_image, cell_size=10, user_text="Hola"):
     return new_image
 
 
-def ascii_art_domino_cards_placeholder(original_image):
+def ascii_art_cards(
+    original_image,
+    cell_size=15,
+    mode="Naipes blancos con símbolos negros"
+):
     """
-    Placeholder para convertir la imagen en ASCII usando símbolos de dominó
-    o naipes, en blanco/negro, que representen distintos niveles de brillo.
-    (Pendiente de implementar)
+    Convierte la imagen en ASCII usando símbolos de naipes en blanco/negro
+    para distintos niveles de brillo. Requiere tener instalada la fuente adecuada
+    (cards.ttf u otra con soporte de glifos de naipes) para verse con claridad.
+
+    mode puede ser:
+      - "Naipes blancos con símbolos negros"
+      - "Naipes negros con símbolos blancos"
     """
-    return original_image
+
+    width, height = original_image.size
+    pixels = original_image.load()
+
+    # Escala de cartas (del más oscuro al más claro)
+    # Ajusta según las cartas que tu fuente soporte mejor.
+    cards_scale = "🂠🂡🂢🂣🂤🂥🂦 "
+
+    # Color de fondo vs. color del texto
+    if mode == "Naipes blancos con símbolos negros":
+        background_color = (255, 255, 255)  # Fondo blanco
+        fill_color = (0, 0, 0)             # Símbolos negros
+    else:
+        background_color = (0, 0, 0)       # Fondo negro
+        fill_color = (255, 255, 255)       # Símbolos blancos
+
+    # Creamos la imagen base
+    new_image = Image.new("RGB", (width, height), color=background_color)
+    draw = ImageDraw.Draw(new_image)
+
+    # Cargamos la fuente. Lo ideal es un TTF de cartas si lo tienes.
+    try:
+        # font = ImageFont.truetype("cards.ttf", cell_size)
+        font = ImageFont.load_default()
+    except:
+        font = ImageFont.load_default()
+
+    num_symbols = len(cards_scale)
+
+    for y in range(0, height, cell_size):
+        for x in range(0, width, cell_size):
+            sum_r, sum_g, sum_b = 0, 0, 0
+            count = 0
+
+            # Calculamos el brillo promedio en el bloque
+            for by in range(y, min(y + cell_size, height)):
+                for bx in range(x, min(x + cell_size, width)):
+                    r, g, b = pixels[bx, by]
+                    sum_r += r
+                    sum_g += g
+                    sum_b += b
+                    count += 1
+
+            avg_r = sum_r // count
+            avg_g = sum_g // count
+            avg_b = sum_b // count
+            brightness = (avg_r + avg_g + avg_b) // 3  # [0..255]
+
+            # Mapeamos brillo -> índice en la escala
+            char_index = brightness * (num_symbols - 1) // 255
+            card_char = cards_scale[char_index]
+
+            # Medimos y dibujamos
+            text_w, text_h = get_text_dimensions(draw, card_char, font)
+            cx = x + (cell_size - text_w) // 2
+            cy = y + (cell_size - text_h) // 2
+
+            draw.text((cx, cy), card_char, font=font, fill=fill_color)
+
+    return new_image
 
 # =============================================================================
 # FUNCIÓN PRINCIPAL DE STREAMLIT
@@ -278,7 +345,6 @@ def main():
     selected_filter = st.sidebar.selectbox("Selecciona un tipo de ASCII Art:", filter_options)
     uploaded_file = st.sidebar.file_uploader("Sube una imagen", type=["jpg", "jpeg", "png"])
 
-    # Parámetros para cada filtro
     if selected_filter == "ASCII - Letra (M/@) Color":
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
         character_choice = st.sidebar.radio("Elige la letra:", ("M", "@"))
@@ -289,14 +355,24 @@ def main():
 
     elif selected_filter == "ASCII - Conjunto de caracteres B/N":
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
-        st.sidebar.info("Usa un conjunto de caracteres en B/N para simular distintos niveles de brillo.")
 
     elif selected_filter == "ASCII - Texto Custom a Color":
         cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 10)
         user_text = st.sidebar.text_input("Texto/Frase para el ASCII Art:", value="Mi frase aquí")
-        st.sidebar.info("Cada celda se dibujará con el siguiente caracter de tu frase, en el color promedio de la región.")
 
-    # Layout principal
+
+    elif selected_filter == "ASCII - Fichas de Dominó/Naipes (B/N)":
+        cell_size = st.sidebar.slider("Tamaño de celda (px)", 1, 50, 15)
+        cards_mode = st.sidebar.radio(
+            "Variación (Naipes B/N):",
+            ["Naipes blancos con símbolos negros", "Naipes negros con símbolos blancos"]
+        )
+        st.sidebar.info(
+            "Requiere fuente especial de cartas (e.g. 'cards.ttf') para ver "
+            "correctamente los símbolos de naipes.\n"
+            "Si no la tienes, podrías ver cuadraditos o emojis en lugar de cartas."
+        )
+
     title_col, download_col = st.columns([0.85, 0.15])
     with title_col:
         st.title("Aplicación ASCII Art")
@@ -305,30 +381,27 @@ def main():
         original_image = Image.open(uploaded_file).convert('RGB')
 
         col1, col2 = st.columns(2)
+
         with col1:
             st.image(original_image, caption="Imagen Original", use_container_width=True)
 
         with col2:
             if selected_filter == "ASCII - Letra (M/@) Color":
                 result_image = ascii_art_m_color(original_image, cell_size, character_choice)
-                st.image(result_image, caption="ASCII con color", use_container_width=True)
 
             elif selected_filter == "ASCII - Letra (M/@) Gris":
                 result_image = ascii_art_m_grayscale(original_image, cell_size, character_choice)
-                st.image(result_image, caption="ASCII en gris", use_container_width=True)
 
             elif selected_filter == "ASCII - Conjunto de caracteres B/N":
                 result_image = ascii_art_chars_bn(original_image, cell_size)
-                st.image(result_image, caption="ASCII en B/N", use_container_width=True)
 
             elif selected_filter == "ASCII - Texto Custom a Color":
-                # Nueva función implementada
                 result_image = ascii_art_custom_text_color(original_image, cell_size, user_text)
-                st.image(result_image, caption="ASCII con texto custom a color", use_container_width=True)
+
 
             elif selected_filter == "ASCII - Fichas de Dominó/Naipes (B/N)":
-                result_image = ascii_art_domino_cards_placeholder(original_image)
-                st.image(result_image, caption="Resultado (Placeholder)", use_container_width=True)
+                result_image = ascii_art_cards(original_image, cell_size, cards_mode)
+                st.image(result_image, caption="ASCII de Naipes", use_container_width=True)
 
             # Botón de descarga
             with download_col:
@@ -342,11 +415,10 @@ def main():
                     "ASCII - Letra (M/@) Gris": "ascii_m_gris.png",
                     "ASCII - Conjunto de caracteres B/N": "ascii_chars_bn.png",
                     "ASCII - Texto Custom a Color": "ascii_texto_color.png",
-                    "ASCII - Fichas de Dominó/Naipes (B/N)": "ascii_domino.png"
+                    "ASCII - Fichas de Dominó/Naipes (B/N)": "ascii_naipes.png"
                 }
-
                 st.download_button(
-                    label="⬇️ Descargar resultado",
+                    label="⬇️ Descargar",
                     data=buf.getvalue(),
                     file_name=file_names.get(selected_filter, "ascii_art.png"),
                     mime="image/png"
